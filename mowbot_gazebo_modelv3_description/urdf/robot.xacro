@@ -1,0 +1,171 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:include filename="$(find mowbot_gazebo_modelv3_description)/urdf/decorations.xacro" />
+  <xacro:include filename="$(find mowbot_gazebo_modelv3_description)/urdf/inertia_macros.xacro" />
+  <xacro:include filename="$(find mowbot_gazebo_modelv3_description)/urdf/track.xacro" />
+
+  <!-- load parameter -->
+  <!-- <xacro:property name="robot_info" value="${xacro.load_yaml('$(find mowbot_gazebo_modelv3_description)/config/robot_info.param.yaml')}"/> -->
+  <xacro:property name="M_PI" value="3.14159"/>
+
+  <!-- Robot Size -->
+  <xacro:property name="robot_x_size" value="1.31600000" />
+  <xacro:property name="robot_y_size" value="1.24000000" />
+  <xacro:property name="robot_z_size" value="0.66160000" />  
+
+  <!-- Track Properties -->
+  <xacro:property name="track_x_size" value="0.968" />
+  <xacro:property name="track_y_size" value="0.15" />
+  <xacro:property name="track_z_size" value="0.1" />
+  <xacro:property name="track_wheel_radius" value="0.11" />
+  <xacro:property name="track_wheel_width" value="0.15" />
+
+  <!-- Track Mounting Position -->
+  <xacro:property name="track_mount_x_size" value="0.1" />
+  <xacro:property name="track_mount_y_size" value="${robot_y_size - track_wheel_width}" />
+  <xacro:property name="track_mount_vertical_offset" value="0" />
+
+  <!-- Body Box Size -->
+  <xacro:property name="body_box_x_size" value="${robot_x_size}" />
+  <xacro:property name="body_box_y_size" value="${robot_y_size}" />
+  <xacro:property name="body_box_z_size" value="${robot_z_size - 2*track_wheel_radius}" />
+
+  <!-- Robot mass (kg) -->
+  <xacro:property name="robot_mass" value="310" />
+  <xacro:property name="robot_body_mass" value="297" />
+  <xacro:property name="robot_track_mass" value="0.5" />
+  <xacro:property name="robot_track_wheel_mass" value="1" />
+
+  <!-- robot body -->
+  <link name="base_link">
+  </link>
+
+  <!-- robot body box -->
+  <!-- body box link to store the robot's body inertia -->
+  <link name="body_box">
+    <collision>
+      <geometry>
+        <box size="${body_box_x_size} ${body_box_y_size} ${body_box_z_size}"/>
+      </geometry>
+    </collision>
+    <inertial_box mass="297" x="${body_box_x_size}" y="${body_box_y_size}" z="${body_box_z_size}">
+      <origin xyz="0 0 0" />
+    </inertial_box>
+  </link>
+
+  <joint name="body_box_joint" type="fixed">
+    <origin xyz="0 0 ${0.5*(robot_z_size-2*track_wheel_radius)+track_wheel_radius}" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="body_box" />
+  </joint>
+
+  <link name="base_visual">
+    <visual>
+      <geometry>
+        <mesh filename="package://mowbot_gazebo_modelv3_description/mesh/mowbot_modelv3.stl" scale="1.0 1.0 1.0"/>
+      </geometry>
+      <material name="orange"/>
+    </visual>
+  </link>
+
+  <joint name="base_visual_joint" type="fixed">
+    <origin xyz="0 0 ${track_wheel_radius}" rpy="0 0 0" />
+    <parent link="base_link" />
+    <child link="base_visual" />
+  </joint>
+
+  <link name="base_footprint">
+  </link>
+
+  <joint name="base_footprint_joint" type="fixed">
+    <origin xyz="0.0 0.0 ${-track_wheel_radius}" rpy="0.0 0.0 0.0"/>
+    <parent link="base_link" />
+    <child link="base_footprint" />
+  </joint>
+
+  <!-- Track macros -->
+  <xacro:track track_prefix="left">
+    <origin xyz="${track_mount_x_size} ${0.5*track_mount_y_size} ${-track_mount_vertical_offset}" rpy="0 0 0"/>
+  </xacro:track>
+
+  <xacro:track track_prefix="right">
+    <origin xyz="${track_mount_x_size} ${-0.5*track_mount_y_size} ${-track_mount_vertical_offset}" rpy="0 0 0"/>
+  </xacro:track>
+
+  <!-- Gazebo -->
+  <gazebo>
+    <plugin name="gazebo_ros2_control" filename="libgazebo_ros2_control.so">
+      <parameters>$(find mowbot_gazebo_modelv3_description)/config/gazebo_control.yaml</parameters>
+    </plugin>
+  </gazebo>
+
+  <gazebo reference="base_visual">
+    <material>Gazebo/Orange</material>
+  </gazebo>
+
+  <!-- ROS2 control -->
+  <ros2_control name="mowbot_hardware" type="system">
+    <hardware>
+        <plugin>gazebo_ros2_control/GazeboSystem</plugin>
+    </hardware>
+
+    <!-- Left Track -->
+    <joint name="left_track_front_wheel_joint" type="continuous">
+      <command_interface name="velocity">
+        <param name="min">-2</param>
+        <param name="max">2</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="left_track_middle_wheel_joint" type="continuous">
+      <command_interface name="velocity">
+        <param name="min">-2</param>
+        <param name="max">2</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="left_track_rear_wheel_joint" type="continuous">
+      <command_interface name="velocity">
+        <param name="min">-2</param>
+        <param name="max">2</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <!-- Right Track -->
+    <joint name="right_track_front_wheel_joint" type="continuous">
+      <command_interface name="velocity">
+        <param name="min">-2</param>
+        <param name="max">2</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="right_track_middle_wheel_joint" type="continuous">
+      <command_interface name="velocity">
+        <param name="min">-2</param>
+        <param name="max">2</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+    <joint name="right_track_rear_wheel_joint" type="continuous">
+      <command_interface name="velocity">
+        <param name="min">-2</param>
+        <param name="max">2</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+    </joint>
+
+  </ros2_control>
+
+</robot>

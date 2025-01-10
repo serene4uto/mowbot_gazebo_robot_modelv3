@@ -1,0 +1,7 @@
+/**:
+  ros__parameters:
+    track_wheel_radius: 0.11 # The radius of the track wheel
+    track_wheel_width: 0.15 # The lateral width of the wheel
+    track_wheel_base: 0.0 # between front wheel center and rear wheel center
+    track_wheel_tread: 0.0 # between left wheel center and right wheel center
+    
